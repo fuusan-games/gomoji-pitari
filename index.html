@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="theme-color" content="#5b3a22">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ごもじでピタリ 〜ふーさんの いいかえクイズ〜</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='6' y='30' width='26' height='26' rx='4' fill='%23fff0ef' stroke='%23c92a2a' stroke-width='5'/><rect x='36' y='30' width='26' height='26' rx='4' fill='%23fff0ef' stroke='%23c92a2a' stroke-width='5'/><circle cx='80' cy='43' r='13' fill='%23eef6ff' stroke='%231c6fc4' stroke-width='5'/><text x='50' y='92' font-size='30' font-weight='900' text-anchor='middle' fill='%23d9480f'>5</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="banner"></div>
+<!-- タイトル -->
+<section class="screen active" id="title"><div class="col">
+  <div class="logo"><h1 class="tag" aria-label="ごもじでピタリ ふーさんの いいかえクイズ"><div class="t1">ごもじでピタリ</div><div class="t2">〜ふーさんの いいかえクイズ〜</div></h1>
+    <div class="tfive" id="titleFive"></div>
+    <div class="t3">お題を <b style="color:var(--kj)">漢字2文字</b>＋<b style="color:var(--kt)">カタカナ3文字</b> で言いかえて、<br>親に当ててもらおう！ 早く書いて小さい番号を取るのがコツ。</div></div>
+  <div class="card">
+    <div class="lab">ニックネーム</div>
+    <input class="in" id="nameIn" maxlength="8" placeholder="例：さとう" autocomplete="nickname">
+  </div>
+  <div class="card" id="inviteJoinBox" style="display:none"><div class="mid" style="font-size:16px;opacity:1">部屋 <b id="invCode"></b> に招待されています</div><button class="btn main" id="joinInvitedBtn" style="margin-top:10px">この部屋に入る</button></div>
+  <button class="btn main" id="createBtn">📝 部屋を作る（ホスト）</button>
+  <button class="btn sub" id="soloBtn">🐻 ふーさんと遊ぶ（ひとりでも）</button>
+  <div class="card"><div class="lab">部屋コードで参加</div><div class="row"><input class="in" id="codeIn" maxlength="4" placeholder="ABCD" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:4px;font-weight:900"><button class="btn sub" id="joinBtn" style="flex:.6">参加</button></div></div>
+  <button class="btn" id="resumeBtn" style="display:none"></button>
+  <button class="btn" id="rejoinBtn" style="display:none"></button>
+  <button class="btn" id="rulesBtn1">📖 あそびかた</button>
+  <p class="hint" style="text-align:center">3〜6人（空いた席は ふーさん🐻）・約15分。ひとり1台のスマホで遊びます。</p>
+</div></section>
+<!-- ロビー -->
+<section class="screen" id="lobby"><div class="col">
+  <div class="lobbyTitle">📝 ごもじでピタリ 〜ふーさんの いいかえクイズ〜</div>
+  <div class="card net-only" style="text-align:center"><div class="lab">部屋コード</div><div class="codeBig" id="codeBig"></div><div id="qr"></div><div class="url" id="inviteUrl"></div><div class="row"><button class="btn" id="copyBtn">🔗 コピー</button><button class="btn" id="shareBtn">📤 共有</button></div></div>
+  <div class="card net-only"><div class="row" style="align-items:center"><div class="lab" style="margin:0">参加者</div><div class="lab" id="seatCount" style="text-align:right;margin:0"></div></div><div id="seatList"></div><p class="hint" id="seatHint"></p></div>
+  <div class="card"><div class="lab">人数（空いた席は ふーさん🐻）</div><div class="seg" id="npSeg"></div>
+    <p class="hint" id="npHint"></p>
+    <div id="cpuList" style="margin-top:8px"></div>
+    <div class="host-only" id="lvAllBox"><div class="lab" style="margin-top:10px">ふーさんの強さを まとめて変える</div><div class="seg" id="lvAllSeg"></div></div>
+    <div class="lab" style="margin-top:12px">書く時間</div><div class="seg" id="secSeg"></div>
+    <p class="hint guest-only">設定はホストが決めます。</p></div>
+  <button class="btn main host-only" id="startBtn">▶ ゲームスタート</button>
+  <p class="mid guest-only" id="guestWait">ホストがスタートするのを待っています…</p>
+  <div class="row"><button class="btn" id="rulesBtn2">📖 あそびかた</button><button class="btn" id="leaveBtn1">🚪 部屋を出る</button></div>
+</div></section>
+<!-- ゲーム -->
+<section class="screen" id="game">
+  <div class="top"><span class="ph" id="phLabel"></span><button class="ib" id="soundBtn" aria-label="音">🔊</button><button class="ib" id="menuBtn" aria-label="メニュー">⋯</button></div>
+  <div id="lobbyReqBar"></div>
+  <div class="gwrap">
+    <div id="chips"></div>
+    <div class="timer" id="timer"><i id="timerFill"></i><b id="timerNum"></b></div>
+    <div id="stage"><div id="stageInner"></div><div id="pop"></div></div>
+    <!-- 書く：入力欄はここだけ（受信のたびに作り直さないので IME が切れない） -->
+    <div class="panel" id="writePanel" hidden>
+      <div class="frow">
+        <label class="fbox kj"><span>漢字 2文字</span><input id="inK" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" aria-label="漢字2文字" placeholder="□□"></label>
+        <label class="fbox kt"><span>カタカナ 3文字（ひらがなでOK）</span><input id="inT" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="カタカナ3文字" placeholder="○○○"></label>
+      </div>
+      <div class="wchk"><span id="wPrev"></span><div class="wmsg" id="wMsg"></div></div>
+      <div class="tlab" id="tLab">できたら番号を取って提出（早い者勝ち・小さい番号から発表）</div>
+      <div class="tiles" id="tileRow"></div>
+    </div>
+    <!-- 答える（親） -->
+    <div class="panel" id="answerPanel" hidden>
+      <div class="arow"><input id="inA" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" placeholder="お題は なに？" aria-label="こたえ"><button id="ansBtn">答える</button><button class="pass" id="passBtn">パス</button></div>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="ctrl" id="ctrl"></div>
+  </div>
+</section>
+<!-- 結果 -->
+<section class="screen" id="end"><div class="col">
+  <div class="logo" style="padding:6px 0 0"><div style="font-size:26px;font-weight:900">🏆 けっか</div></div>
+  <div class="card"><div id="rankList"></div></div>
+  <div class="card"><div class="lab">ふりかえり</div><div id="histList"></div></div>
+  <button class="btn main host-only" id="againBtn">🔁 もう一度（同じメンバー）</button>
+  <button class="btn host-only" id="toLobbyBtn">🏠 ロビーに戻る</button>
+  <p class="mid guest-only">ホストが次のゲームを始めるのを待っています</p>
+  <button class="btn" id="leaveBtn2">🚪 部屋を出る</button>
+</div></section>
+
+<div class="ov" id="connecting"><div class="card" style="text-align:center"><div class="spin"></div><h3 id="connTitle">接続中…</h3><p class="mid" id="connText"></p><button class="btn" id="connCancel">やめる</button></div></div>
+<div class="ov" id="confirmModal"><div class="card"><h3 id="cfTitle"></h3><p class="mid" id="cfText"></p><div class="row"><button class="btn" id="cfNo">やめる</button><button class="btn main" id="cfYes">OK</button></div></div></div>
+<div class="ov" id="menuModal"><div class="card menu"><h3>メニュー</h3>
+  <button class="btn host-only" id="menuAbort">⏸️ 中断してロビーに戻る</button>
+  <button class="btn guest-only" id="menuReq">🙋 ロビーに戻りたい</button>
+  <button class="btn" id="menuSound">🔊 BGM・効果音：オン</button>
+  <button class="btn" id="menuRules">📖 あそびかた</button>
+  <button class="btn" id="menuLeave">🚪 退出する</button>
+  <button class="btn" id="menuHiroba">🏠 ひろばへ</button>
+  <button class="btn main" id="menuClose">とじる</button></div></div>
+<div class="ov" id="rulesModal"><div class="card"><h3>📖 あそびかた</h3><ol class="rules" id="rulesList"></ol><button class="btn main" id="rulesClose">とじる</button></div></div>
+<div id="toast"></div>
+<script src="config.js"></script>
+<script src="vendor/peerjs.min.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script src="words-kata1.js"></script>
+<script src="words-kata2.js"></script>
+<script src="words-kanji1.js"></script>
+<script src="words-kanji2.js"></script>
+<script src="words-extra.js"></script>
+<script src="logic.js"></script>
+<script src="core.js"></script>
+<script src="audio.js"></script>
+<script src="bgm.js"></script>
+<script src="fx.js"></script>
+<script src="host.js"></script>
+<script src="net.js"></script>
+<script src="ui.js"></script>
+<script src="app.js"></script>
+
+<a id="hirobaFab" class="hiroba-fab" href="https://ryowatanabe1161-svg.github.io/fuusan-games/" hidden>🏠 ひろばへ</a>
+<style>
+.hiroba-fab{position:fixed;left:max(10px,env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom));z-index:45;padding:7px 12px;border-radius:999px;background:rgba(255,253,247,.94);border:2px solid #d9c9a8;font:900 13px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif;color:#2a2522;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.14);-webkit-tap-highlight-color:transparent}
+.hiroba-fab[hidden]{display:none!important}
+@media (display-mode:standalone){.hiroba-fab{display:inline-block}}
+body.in-game .hiroba-fab{display:none!important}
+</style>
+<script>
+(function(){
+  var U='https://ryowatanabe1161-svg.github.io/fuusan-games/';
+  function want(){
+    try{ if(new URLSearchParams(location.search).get('from')==='portal') return true; }catch(e){}
+    try{ if(window.matchMedia('(display-mode: standalone)').matches) return true; }catch(e){}
+    if(navigator.standalone) return true;
+    return false;
+  }
+  function go(e){ if(e) e.preventDefault(); location.href=U; }
+  function wire(){
+    var fab=document.getElementById('hirobaFab');
+    if(fab){ fab.hidden=!want(); fab.href=U; fab.addEventListener('click',go); document.body.classList.toggle('has-fab',!fab.hidden); }
+    var b=document.getElementById('menuHiroba');
+    if(b && !b._hiroba){ b._hiroba=1; b.addEventListener('click',function(){ location.href=U; }); }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',wire); else wire();
+  document.addEventListener('click',function(e){
+    var t=e.target && e.target.closest && e.target.closest('#menuHiroba');
+    if(t){ e.preventDefault(); location.href=U; }
+  },true);
+})();
+</script>
+
+</body>
+</html>
